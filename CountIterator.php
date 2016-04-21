@@ -36,8 +36,10 @@ class CountIterator implements Iterator
     {
         if (! $this->started) {
             $this->started = true;
+
             return $this->start;
         }
+
         return $this->start + ($this->step * $this->position);
     }
 
@@ -50,7 +52,6 @@ class CountIterator implements Iterator
     {
         return true;
     }
-
 
     public function __debugInfo()
     {

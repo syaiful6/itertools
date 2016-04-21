@@ -8,7 +8,7 @@ class StreamIterator implements Iterator
     /**
      * @var resourse
      */
-	protected $stream;
+    protected $stream;
 
     /**
      *
@@ -30,6 +30,7 @@ class StreamIterator implements Iterator
         if (! is_resource($this->stream)) {
             return false;
         }
+
         return !feof($this->stream);
     }
 
@@ -80,6 +81,7 @@ class StreamIterator implements Iterator
         if (! is_int($result)) {
             throw new RuntimeException('Error occurred during tell operation');
         }
+
         return $result;
     }
 

@@ -3,7 +3,7 @@ namespace Itertools\Traits;
 
 trait KeyPosition
 {
-	protected $position = 0;
+    protected $position = 0;
 
     /**
      * Rewind the Iterator to the first element
