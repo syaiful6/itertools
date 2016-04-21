@@ -4,12 +4,13 @@ namespace Itertools\Test;
 
 use PHPUnit_Framework_TestCase;
 use Mockery as m;
-use function Itertools\iter, Itertools\chain, Itertools\range, Itertools\reversed,
-    Itertools\next, Itertools\to_array;
+use function Itertools\iter;
+use Itertools\chain;
+use Itertools\reversed;
+use Itertools\to_array;
 
 class GenericIteratorTest extends PHPUnit_Framework_TestCase
 {
-
     public function tearDown()
     {
         m::close();
@@ -36,7 +37,6 @@ class GenericIteratorTest extends PHPUnit_Framework_TestCase
         $reverse = reversed($reverseable);
         $this->assertTrue($reverse instanceof \ArrayIterator);
         $this->assertSame(['foo', 'bar'], to_array($reverse));
-
     }
 
     /**

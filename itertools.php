@@ -62,6 +62,7 @@ function next($iterator, $default = null)
 function zip(...$iterators)
 {
     $iterators = array_map('Itertools\\iter', $iterators);
+
     return new ZipIterator(...$iterators);
 }
 
@@ -73,7 +74,8 @@ function reversed($seq)
     if ($seq instanceof Reverseable) {
         return $seq->reversed();
     }
-    return call_user_func(function () use ($seq){
+
+    return call_user_func(function () use ($seq) {
         $length = \count($seq);
         foreach (range($length - 1, -1, -1) as $index) {
             yield $seq[$index];
@@ -90,6 +92,7 @@ function reduce(callable $function, $iterable, $startValue = null)
     foreach ($iterable as $item) {
         $acc = $function($acc, $item);
     }
+
     return $acc;
 }
 
@@ -97,7 +100,8 @@ function reduce(callable $function, $iterable, $startValue = null)
  * Joins the elements of an iterable with a separator between them.
  *
  */
-function join($separator, $iterable) {
+function join($separator, $iterable)
+{
     $str = '';
     $first = true;
     foreach ($iterable as $value) {
@@ -105,9 +109,10 @@ function join($separator, $iterable) {
             $str .= $value;
             $first = false;
         } else {
-            $str .= $separator . $value;
+            $str .= $separator.$value;
         }
     }
+
     return $str;
 }
 
@@ -121,6 +126,7 @@ function all(callable $callback, $iterable)
             return false;
         }
     }
+
     return true;
 }
 
@@ -135,6 +141,7 @@ function any(callable $callback, $iterable)
             return true;
         }
     }
+
     return false;
 }
 
@@ -162,6 +169,7 @@ function splatmap($callback, $iterable)
             return $args;
         };
     }
+
     return new SplatMapIterator($callback, iter($iterable));
 }
 
@@ -174,9 +182,11 @@ function filter($callback, $iterable)
         if ($callback === null) {
             return (bool) $current;
         }
+
         return $callback($current);
     };
     $iter = iter($iterable);
+
     return new \CallbackFilterIterator($iter, $callback);
 }
 
@@ -189,9 +199,11 @@ function filterfalse($callback, $iterable)
         if ($callback === null) {
             return !$current;
         }
+
         return !$callback($current);
     };
     $iter = iter($iterable);
+
     return new \CallbackFilterIterator($iter, $callback);
 }
 
@@ -236,13 +248,13 @@ function range($start, $stop = null, $step = null)
 function accumulate($iterable, callable $callback = null)
 {
     if ($callback === null) {
-        $callback = function($a, $b) {
+        $callback = function ($a, $b) {
             return $a + $b;
         };
     }
     $iter = iter($iterable);
     // used to identify
-    $sentinel = new \stdClass;
+    $sentinel = new \stdClass();
     $total = next($iter, $sentinel);
     if ($total !== $sentinel) {
         yield $total;
@@ -295,6 +307,7 @@ function count($start = 0, $step = 1)
 function cycle($iterable)
 {
     $iter = iter($iterable);
+
     return new \InfiniteIterator($iter);
 }
 
@@ -346,7 +359,7 @@ function dropwhile(callable $predicate, $iterable)
         while (true) {
             yield next($iter);
         }
-    } catch(StopIteration $e) {
+    } catch (StopIteration $e) {
         // pass
     }
 }
@@ -357,6 +370,7 @@ function dropwhile(callable $predicate, $iterable)
 function groupby($iterable, callable $grouper = null)
 {
     $iterator = new Groupby($iterable, $grouper);
+
     return iter($iterator);
 }
 
@@ -370,7 +384,7 @@ function slice($iterable, $start, $stop = null, $step = null)
     $step = $step ?: 1;
     $nexts = range($start, $stop, $step);
     $nexti = $nexts->current();
-    foreach(enumerate($iterable, 0, true) as $key => list($i, $element)) {
+    foreach (enumerate($iterable, 0, true) as $key => list($i, $element)) {
         if ($i == $nexti) {
             yield $key => $element;
             $nexts->next();
@@ -448,6 +462,7 @@ function to_array($iterable, $preserve = false)
             $out[$key] = $value;
         }
     }
+
     return $out;
 }
 
@@ -458,6 +473,7 @@ function multiple($iterable, $by = 2)
 {
     $count = \count($iterable);
     $maxLoop = $count * $by;
+
     return new \LimitIterator(cycle($iterable), $maxLoop);
 }
 
@@ -501,6 +517,7 @@ function product(...$iterables)
     $len = count($iterators);
     if (!$len) {
         yield [] => [];
+
         return;
     }
     $keyTuple = $valueTuple = array_fill(0, $len, null);
@@ -525,6 +542,7 @@ function product(...$iterables)
                 continue 2;
             }
         }
+
         return;
     }
 }
