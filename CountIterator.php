@@ -24,6 +24,11 @@ class CountIterator implements Iterator
     public function __construct($start, $step = 1)
     {
         $this->start = $start;
+        if ($step === 0) {
+            throw new \InvalidArgumentException(
+                'Argument 2 passed to CountIterator must not zero'
+            );
+        }
         $this->step = $step;
     }
 
