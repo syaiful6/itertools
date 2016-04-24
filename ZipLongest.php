@@ -19,13 +19,22 @@ class ZipLongest implements Iterator
 
     protected $iterators;
 
+    /**
+     * create new ZipLongest object
+     *
+     * @param  \Iterators[] $iterator
+     * @return void
+     */
     public function __construct(Iterator ...$iterators)
     {
         $this->iterators = $iterators;
     }
 
     /**
+    * Set fill value for iterator that already exhausted
     *
+    * @param mixed fillValue
+    * @return mixed
     */
     public function setFillValue($fillValue)
     {
@@ -33,7 +42,7 @@ class ZipLongest implements Iterator
     }
 
     /**
-     *
+     * Get current fillValue
      */
     public function getFillValue()
     {
@@ -41,7 +50,10 @@ class ZipLongest implements Iterator
     }
 
     /**
+     * Check if the current position is valid
      *
+     * @link http://php.net/manual/en/iterator.valid.php
+     * @return boolean
      */
     public function valid()
     {
@@ -50,11 +62,14 @@ class ZipLongest implements Iterator
                 return true;
             }
         }
+
         return false;
     }
 
     /**
+     * Return the current element
      *
+     * @return mixed
      */
     public function current()
     {
@@ -66,6 +81,7 @@ class ZipLongest implements Iterator
                 $res[] = $this->fillValue;
             }
         }
+
         return $res;
     }
 

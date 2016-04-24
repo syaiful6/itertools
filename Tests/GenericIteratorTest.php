@@ -30,7 +30,7 @@ class GenericIteratorTest extends PHPUnit_Framework_TestCase
             return $item < 5;
         }, $input);
         $taken = to_array($take);
-        $this->assertSame([1,4], $taken);
+        $this->assertSame([1, 4], $taken);
     }
 
     /**
@@ -43,9 +43,9 @@ class GenericIteratorTest extends PHPUnit_Framework_TestCase
             return $i <= 3;
         };
         $filtered = to_array(filter($callback, $toFilter));
-        $this->assertSame([0,1,2,3], $filtered);
+        $this->assertSame([0, 1, 2, 3], $filtered);
         $filtered = to_array(filter_false($callback, $toFilter));
-        $this->assertSame([4,5], $filtered);
+        $this->assertSame([4, 5], $filtered);
     }
 
     /**
@@ -53,11 +53,11 @@ class GenericIteratorTest extends PHPUnit_Framework_TestCase
      */
     public function tesMultiple()
     {
-        $mul = to_array(multiple([1,2,3], 2));
+        $mul = to_array(multiple([1, 2, 3], 2));
         $this->assertSame(6, count($mul));
-        $zero = to_array(multiple([1,2,3]), 0);
+        $zero = to_array(multiple([1, 2, 3]), 0);
         $this->assertSame(0, count($zero));
-        $oneWithIterator = to_array(multiple(new \ArrayIterator([1,2,3]), 1));
+        $oneWithIterator = to_array(multiple(new \ArrayIterator([1, 2, 3]), 1));
         $this->assertSame(3, count($oneWithIterator));
     }
 

@@ -4,7 +4,6 @@ namespace Itertools;
 use Iterator;
 use IteratorAggregate;
 use Traversable;
-use Itertools\StopIteration;
 
 /**
 * Convert any PHP value to iterator if it can
@@ -66,7 +65,7 @@ function next($iterator, $default = null)
 function zip(...$iterables)
 {
     $iterators = \array_map(__NAMESPACE__.'\\iter', $iterables);
-    $sentinel = new \stdClass;
+    $sentinel = new \stdClass();
     while (\count($iterators) > 0) {
         $results = [];
         foreach ($iterators as $it) {
@@ -86,6 +85,7 @@ function zip(...$iterables)
 function zip_longest(...$iterables)
 {
     $iterators = \array_map(__NAMESPACE__.'\\iter', $iterables);
+
     return new ZipLongest(...$iterators);
 }
 
@@ -569,7 +569,7 @@ function permutations($iterable, $r = null)
         $indices = array_unique(to_array($indices));
         if (\count($indices) == $r) {
             $perm = [];
-            foreach($indices as $i) {
+            foreach ($indices as $i) {
                 $perm[] = $pools[$i];
             }
             yield $perm;

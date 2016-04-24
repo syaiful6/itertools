@@ -44,8 +44,8 @@ class ProductIterator implements IteratorAggregate
         $result = [[]];
         foreach ($pools as $key => $values) {
             $append = [];
-            foreach($result as $product) {
-                foreach($values as $item) {
+            foreach ($result as $product) {
+                foreach ($values as $item) {
                     $product[$key] = $item;
                     $append[] = $product;
                 }

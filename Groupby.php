@@ -3,7 +3,6 @@ namespace Itertools;
 
 use IteratorAggregate;
 use Itertools\Traits\SimpleIterable;
-use Itertools\StopIteration;
 
 class Groupby implements IteratorAggregate
 {

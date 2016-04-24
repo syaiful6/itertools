@@ -20,6 +20,7 @@ class CallbackFilterIterator extends FilterIterator
     public function accept()
     {
         $callback = $this->callback;
+
         return (bool) $callback($this->current(), $this->key(), $this->getInnerIterator());
     }
 }
