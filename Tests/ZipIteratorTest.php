@@ -4,8 +4,10 @@ namespace Itertools\Test;
 
 use PHPUnit_Framework_TestCase;
 use function Itertools\zip;
-use Itertools\tee;
-use Itertools\next;
+use function Itertools\zip_longest;
+use function Itertools\tee;
+use function Itertools\next;
+use function Itertools\to_array;
 
 class ZipIteratorTest extends PHPUnit_Framework_TestCase
 {
@@ -45,5 +47,16 @@ class ZipIteratorTest extends PHPUnit_Framework_TestCase
         $this->assertSame([2, 5, 8], next($zipped));
         $this->assertSame([3, 6, 9], next($zipped));
         $this->assertFalse($zipped->valid());
+    }
+
+    /**
+     *
+     */
+    public function testZiplLongest()
+    {
+        $longest = zip_longest(['A', 'B', 'C', 'D'], ['x', 'y']);
+        $longest->setFillValue('-');
+        $longest = to_array($longest);
+        $this->assertSame([['A', 'x'], ['B', 'y'], ['C', '-'], ['D', '-']], $longest);
     }
 }

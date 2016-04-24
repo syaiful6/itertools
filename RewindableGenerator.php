@@ -66,7 +66,7 @@ class RewindableGenerator implements Iterator
     {
         $this->rewindIfGeneratorNull();
 
-        return $this->generator->valid();
+        return $this->generator->current();
     }
 
     public function send($value = null)

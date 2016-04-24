@@ -1,10 +1,15 @@
 <?php
 namespace Itertools;
 
-use IteratorAggregate
+use IteratorAggregate;
 use Itertools\Traits\SimpleIterable;
 
-class Product implements IteratorAggregate
+/**
+ * Originally this cartesion product operation written in function generator,
+ * but to allow user set the repeat option, we move it class based. so they can
+ * set the repeat value before iterating.
+ */
+class ProductIterator implements IteratorAggregate
 {
     use SimpleIterable;
     protected $repeat = 1;
@@ -32,43 +37,23 @@ class Product implements IteratorAggregate
     public function _innerIterator()
     {
         $repeat = $this->repeat;
-        if ($repeat === 1) {
-            $iterators = array_map('Itertools\\iter', $this->iterables);
-        } else {
-            $copied[];
-            foreach ($this->iterables as $iterable) {
-                $copied[] = tee($iterable, $repeat);
-            }
-            $iterators = to_array(chain(...zip(...$copied)));
+        $pools = array_map('Itertools\\to_array', $this->iterables);
+        if ($repeat > 1) {
+            $pools = to_array(multiple($pools, $repeat));
         }
-        $len = count($iterators);
-        if (!$len) {
-            yield [] => [];
-            return;
-        }
-        $keyTuple = $valueTuple = array_fill(0, $len, null);
-        $i = -1;
-        while (true) {
-            while (++$i < $len - 1) {
-                $iterators[$i]->rewind();
-                if (!$iterators[$i]->valid()) {
-                    return;
-                }
-                $keyTuple[$i] = $iterators[$i]->key();
-                $valueTuple[$i] = $iterators[$i]->current();
-            }
-            foreach ($iterators[$i] as $keyTuple[$i] => $valueTuple[$i]) {
-                yield $keyTuple => $valueTuple;
-            }
-            while (--$i >= 0) {
-                $iterators[$i]->next();
-                if ($iterators[$i]->valid()) {
-                    $keyTuple[$i] = $iterators[$i]->key();
-                    $valueTuple[$i] = $iterators[$i]->current();
-                    continue 2;
+        $result = [[]];
+        foreach ($pools as $key => $values) {
+            $append = [];
+            foreach($result as $product) {
+                foreach($values as $item) {
+                    $product[$key] = $item;
+                    $append[] = $product;
                 }
             }
-            return;
+            $result = $append;
+        }
+        foreach ($result as $r) {
+            yield $r;
         }
     }
 

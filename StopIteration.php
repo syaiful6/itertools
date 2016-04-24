@@ -1,5 +1,5 @@
 <?php
-namespace Itertools;
+namespace Itertools\Exceptions;
 
 class StopIteration extends \Exception
 {

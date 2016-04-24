@@ -3,6 +3,7 @@ namespace Itertools;
 
 use IteratorAggregate;
 use Itertools\Traits\SimpleIterable;
+use Itertools\StopIteration;
 
 class Groupby implements IteratorAggregate
 {
@@ -35,7 +36,7 @@ class Groupby implements IteratorAggregate
     /**
      *
      */
-    public function __construct($iterable, callable $grouper = null)
+    public function __construct($grouper, $iterable)
     {
         // if no grouper passed, set them to closure that do nothing
         if ($grouper === null) {

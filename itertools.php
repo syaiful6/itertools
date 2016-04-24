@@ -4,6 +4,7 @@ namespace Itertools;
 use Iterator;
 use IteratorAggregate;
 use Traversable;
+use Itertools\StopIteration;
 
 /**
 * Convert any PHP value to iterator if it can
@@ -57,13 +58,35 @@ function next($iterator, $default = null)
 }
 
 /**
+ * Make an iterator that aggregates elements from each of the iterables.
+ *
+ * @param mixed ...$iterable Stack of iterable
+ * @return \Generator
+ */
+function zip(...$iterables)
+{
+    $iterators = \array_map(__NAMESPACE__.'\\iter', $iterables);
+    $sentinel = new \stdClass;
+    while (\count($iterators) > 0) {
+        $results = [];
+        foreach ($iterators as $it) {
+            $elem = next($it, $sentinel);
+            if ($elem === $sentinel) {
+                return;
+            }
+            $results[] = $elem;
+        }
+        yield $results;
+    }
+}
+
+/**
  *
  */
-function zip(...$iterators)
+function zip_longest(...$iterables)
 {
-    $iterators = array_map('Itertools\\iter', $iterators);
-
-    return new ZipIterator(...$iterators);
+    $iterators = \array_map(__NAMESPACE__.'\\iter', $iterables);
+    return new ZipLongest(...$iterators);
 }
 
 /**
@@ -119,8 +142,13 @@ function join($separator, $iterable)
 /**
  *
  */
-function all(callable $callback, $iterable)
+function all($callback, $iterable)
 {
+    if ($callback === null) {
+        $callback = function ($item) {
+            return (bool) $item;
+        };
+    }
     foreach ($iterable as $it) {
         if (! $callback($it)) {
             return false;
@@ -133,9 +161,13 @@ function all(callable $callback, $iterable)
 /**
  *
  */
-function any(callable $callback, $iterable)
+function any($callback, $iterable)
 {
-    $iter = iterable($iterable);
+    if ($callback === null) {
+        $callback = function ($item) {
+            return (bool) $item;
+        };
+    }
     foreach ($iter as $it) {
         if ($callback($it)) {
             return true;
@@ -148,63 +180,45 @@ function any(callable $callback, $iterable)
 /**
  *
  */
-function map($callback, ...$iterators)
+function map(callable $callback, ...$iterables)
 {
-    if ($callback === null) {
-        $callback = function (...$args) {
-            return $args;
-        };
+    $iterables = zip(...$iterables);
+    foreach ($iterables as $args) {
+        yield $callback(...$args);
     }
-
-    return new MapIterator($callback, ...$iterators);
 }
 
 /**
  *
  */
-function splatmap($callback, $iterable)
+function splat_map(callable $callback, $iterable)
 {
-    if ($callback === null) {
-        $callback = function (...$args) {
-            return $args;
-        };
+    foreach (iter($iterable) as $args) {
+        yield $callback(...$args);
     }
-
-    return new SplatMapIterator($callback, iter($iterable));
 }
 
 /**
  *
  */
-function filter($callback, $iterable)
+function filter(callable $callback, $iterable)
 {
-    $wrap = function ($current) use ($callback) {
-        if ($callback === null) {
-            return (bool) $current;
-        }
+    $iter = iter($iterable);
 
-        return $callback($current);
+    return new CallbackFilterIterator($callback, $iter);
+}
+
+/**
+ *
+ */
+function filter_false(callable $callback, $iterable)
+{
+    $wrap = function (...$args) use ($callback) {
+        return !$callback(...$args);
     };
     $iter = iter($iterable);
 
-    return new \CallbackFilterIterator($iter, $callback);
-}
-
-/**
- *
- */
-function filterfalse($callback, $iterable)
-{
-    $wrap = function ($current) use ($callback) {
-        if ($callback === null) {
-            return !$current;
-        }
-
-        return !$callback($current);
-    };
-    $iter = iter($iterable);
-
-    return new \CallbackFilterIterator($iter, $callback);
+    return new CallbackFilterIterator($wrap, $iter);
 }
 
 /**
@@ -245,13 +259,8 @@ function range($start, $stop = null, $step = null)
  * argument is supplied, it should be a callable which accept two arguments
  * and it will be used instead of addition.
  */
-function accumulate($iterable, callable $callback = null)
+function accumulate(callable $callback, $iterable)
 {
-    if ($callback === null) {
-        $callback = function ($a, $b) {
-            return $a + $b;
-        };
-    }
     $iter = iter($iterable);
     // used to identify
     $sentinel = new \stdClass();
@@ -287,16 +296,19 @@ function chain_from_iterable($iterable)
 }
 
 /**
- * create new CountIterator that iterate over returns evenly spaced values starting
+ * create iterator that iterate over returns evenly spaced values starting
  * number. Note, this iterator is infinite
  * example:
  * count()
  * -> [0, 1, 2, 3, 4...]
  * @see CountIterator
  */
-function count($start = 0, $step = 1)
+function counter($start = 0, $step = 1)
 {
-    return new CountIterator($start, $step);
+    while (true) {
+        yield $start;
+        $start += $step;
+    }
 }
 
 /**
@@ -306,9 +318,17 @@ function count($start = 0, $step = 1)
  */
 function cycle($iterable)
 {
-    $iter = iter($iterable);
-
-    return new \InfiniteIterator($iter);
+    $saved = [];
+    $iterable = iter($iterable);
+    foreach ($iterable as $key => $elem) {
+        yield $key => $elem;
+        $saved[$key] = $elem;
+    }
+    while (\count($saved) > 0) {
+        foreach ($saved as $key => $elem) {
+            yield $key => $elem;
+        }
+    }
 }
 
 /**
@@ -330,8 +350,9 @@ function repeat($target, $times = null)
 /**
  *
  */
-function takewhile(callable $predicate, $iterable)
+function take_while(callable $predicate, $iterable)
 {
+    $iter = iter($iterable);
     foreach ($iterable as $elem) {
         if ($predicate($elem)) {
             yield $elem;
@@ -344,7 +365,7 @@ function takewhile(callable $predicate, $iterable)
 /**
  *
  */
-function dropwhile(callable $predicate, $iterable)
+function drop_while(callable $predicate, $iterable)
 {
     $iter = iter($iterable);
     try {
@@ -352,8 +373,8 @@ function dropwhile(callable $predicate, $iterable)
             $x = next($iter);
             if (! $predicate($x)) {
                 yield $x;
+                break;
             }
-            break;
         }
 
         while (true) {
@@ -367,11 +388,9 @@ function dropwhile(callable $predicate, $iterable)
 /**
  *
  */
-function groupby($iterable, callable $grouper = null)
+function groupby($grouper, $iterable)
 {
-    $iterator = new Groupby($iterable, $grouper);
-
-    return iter($iterator);
+    return new Groupby($grouper, $iterable);
 }
 
 /**
@@ -471,10 +490,25 @@ function to_array($iterable, $preserve = false)
  */
 function multiple($iterable, $by = 2)
 {
-    $count = \count($iterable);
+    if ($by === 0) {
+        return;
+    }
+    $saved = [];
+    foreach ($iterable as $k => $elem) {
+        yield $k => $elem;
+        $saved[$k] = $elem;
+    }
+    if ($by === 1) {
+        return;
+    }
+    $count = \count($saved);
     $maxLoop = $count * $by;
-
-    return new \LimitIterator(cycle($iterable), $maxLoop);
+    foreach (enumerate(cycle($saved), 2, true) as $key => list($k, $elem)) {
+        if ($k > $maxLoop) {
+            break;
+        }
+        yield $key => $elem;
+    }
 }
 
 /**
@@ -511,38 +545,74 @@ function sorted($iterable, $reverse = false, callable $key = null)
     }
 }
 
+/**
+ *
+ */
 function product(...$iterables)
 {
-    $iterators = array_map('Itertools\\iter', $iterables);
-    $len = count($iterators);
-    if (!$len) {
-        yield [] => [];
+    return new ProductIterator(...$iterables);
+}
 
-        return;
+/**
+ * Return successive r length permutations of elements in the iterable.
+ * ex: permutations(['a', 'b', 'c', 'd'], 2)
+ *
+ */
+function permutations($iterable, $r = null)
+{
+    $pools = to_array($iterable);
+    $n = \count($pools);
+    $r = $r === null ? $n : $r;
+    $product = product(range($n));
+    $product->setRepeat($r);
+    foreach ($product as $indices) {
+        $indices = array_unique(to_array($indices));
+        if (\count($indices) == $r) {
+            $perm = [];
+            foreach($indices as $i) {
+                $perm[] = $pools[$i];
+            }
+            yield $perm;
+        }
     }
-    $keyTuple = $valueTuple = array_fill(0, $len, null);
-    $i = -1;
-    while (true) {
-        while (++$i < $len - 1) {
-            $iterators[$i]->rewind();
-            if (!$iterators[$i]->valid()) {
-                return;
-            }
-            $keyTuple[$i] = $iterators[$i]->key();
-            $valueTuple[$i] = $iterators[$i]->current();
-        }
-        foreach ($iterators[$i] as $keyTuple[$i] => $valueTuple[$i]) {
-            yield $keyTuple => $valueTuple;
-        }
-        while (--$i >= 0) {
-            $iterators[$i]->next();
-            if ($iterators[$i]->valid()) {
-                $keyTuple[$i] = $iterators[$i]->key();
-                $valueTuple[$i] = $iterators[$i]->current();
-                continue 2;
-            }
-        }
+}
 
-        return;
+/**
+ * Return r length subsequences of elements from the input iterable.
+ */
+function combinations($iterable, $r)
+{
+    $pool = to_array($iterable);
+    $n = \count($pool);
+    foreach (permutations(range($n), $r) as $indices) {
+        $indices = to_array($indices);
+        if (sorted($indices) === $indices) {
+            $res = [];
+            foreach ($indices as $i) {
+                $res[] = $pool[$i];
+            }
+            yield $res;
+        }
+    }
+}
+
+/**
+ *
+ */
+function combinations_with_replacement($iterable, $r)
+{
+    $pool = to_array($iterable);
+    $n = \count($pool);
+    $product = product(range($n));
+    $product->setRepeat($r);
+    foreach ($product as $indices) {
+        $indices = to_array($indices);
+        if (sorted($indices) === $indices) {
+            $res = [];
+            foreach ($indices as $i) {
+                $res[] = $pool[$i];
+            }
+            yield $res;
+        }
     }
 }
