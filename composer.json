@@ -20,7 +20,7 @@
             "Itertools\\": ""
         },
         "files": [
-            "itertools.php"
+            "bootstrap.php"
         ],
         "exclude-from-classmap": [
             "/Tests/"

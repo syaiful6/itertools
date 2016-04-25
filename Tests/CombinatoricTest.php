@@ -1,5 +1,5 @@
 <?php
-namespace Itertools\Test;
+namespace Itertools\Tests;
 
 use PHPUnit_Framework_TestCase;
 use Itertools\ProductIterator;

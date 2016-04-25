@@ -107,8 +107,7 @@ function reversed($seq)
     if ($seq instanceof Reverseable) {
         return $seq->reversed();
     }
-    if (is_array($seq) || ($seq instanceof \Countable && $seq instanceof \ArrayAccess))
-    {
+    if (is_array($seq) || ($seq instanceof \Countable && $seq instanceof \ArrayAccess)) {
         return call_user_func(function () use ($seq) {
             $length = \count($seq);
             foreach (range($length - 1, -1, -1) as $index) {
@@ -563,37 +562,19 @@ function multiple($iterable, $by = 2)
 }
 
 /**
- * Return a new sorted array from the items in iterable.
- * This function not maintain the keys.
+ * Sort the iterable using TimSort algoritm, because PHP sort family function
+ * isn't stable, ie same value maybe swapped. and they only work with array
  *
- * @param array|\Traversable $iterable The source to sorted
- * @param boolean            $reverse  If set to true, then it sorted as descending
- * @param callable           $key      Specifies a function of one argument that
- *                                     is used to extract a comparison key from
- *                                     each iterable element. Default null,
- *                                     compare the elements directly
+ * @param \Traversable|array $iterable
+ * @param callable|null $comparator, if not provided compare directly
  * @return array
  */
-function sorted($iterable, $reverse = false, callable $key = null)
+function sort($iterable, callable $comparator = null)
 {
-    $arrays = to_array($iterable);
-    if ($key === null) {
-        $phpSorted = $reverse ? '\\rsort' : '\\sort';
-        $phpSorted($arrays);
+    $array = to_array($iterable);
+    Sorting\timsort($array, $comparator);
 
-        return $arrays;
-    } else {
-        // maintain the keys first to get back them
-        $phpSorted = $reverse ? '\\arsort' : '\\asort';
-        $copy = \array_map($key, $arrays);
-        $phpSorted($copy);
-        $retval = [];
-        foreach ($copy as $k => $v) {
-            $retval[$k] = $arrays[$k];
-        }
-        // then remove the keys
-        return \array_values($retval);
-    }
+    return $array;
 }
 
 /**
@@ -637,7 +618,7 @@ function combinations($iterable, $r)
     $n = \count($pool);
     foreach (permutations(range($n), $r) as $indices) {
         $indices = to_array($indices);
-        if (sorted($indices) === $indices) {
+        if (sort($indices) === $indices) {
             $res = [];
             foreach ($indices as $i) {
                 $res[] = $pool[$i];
@@ -658,7 +639,7 @@ function combinations_with_replacement($iterable, $r)
     $product->setRepeat($r);
     foreach ($product as $indices) {
         $indices = to_array($indices);
-        if (sorted($indices) === $indices) {
+        if (sort($indices) === $indices) {
             $res = [];
             foreach ($indices as $i) {
                 $res[] = $pool[$i];
