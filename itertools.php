@@ -57,7 +57,8 @@ function next($iterator, $default = null)
 }
 
 /**
- * Make an iterator that aggregates elements from each of the iterables.
+ * Make an iterator that aggregates elements from each of the iterables. Stop when
+ * one of the iterable exhausted.
  *
  * @param mixed ...$iterable Stack of iterable
  * @return \Generator
@@ -80,7 +81,12 @@ function zip(...$iterables)
 }
 
 /**
+ * Make an iterator that aggregates elements from each of the iterables. Stop when
+ * all of the iterable exhausted. See ZipLongest if you want to set the fillValue
+ * for iterable that already exhausted.
  *
+ * @param mixed ...$iterable Stack of iterable
+ * @return ZipLongest
  */
 function zip_longest(...$iterables)
 {
@@ -90,24 +96,39 @@ function zip_longest(...$iterables)
 }
 
 /**
+ * Return an iterator that reverse version passed here. The parameter passed here
+ * should instanceof Itertools\Reverseable. Otherwise that object should countable
+ * and implements ArrayAccess, where all member of this object accessed via numeric value.
  *
+ * @param Itertools\Reverseable|array|Countable&\ArrayAccess
  */
 function reversed($seq)
 {
     if ($seq instanceof Reverseable) {
         return $seq->reversed();
     }
-
-    return call_user_func(function () use ($seq) {
-        $length = \count($seq);
-        foreach (range($length - 1, -1, -1) as $index) {
-            yield $seq[$index];
-        }
-    });
+    if (is_array($seq) || ($seq instanceof \Countable && $seq instanceof \ArrayAccess))
+    {
+        return call_user_func(function () use ($seq) {
+            $length = \count($seq);
+            foreach (range($length - 1, -1, -1) as $index) {
+                yield $seq[$index];
+            }
+        });
+    }
+    throw new \InvalidArgumentException(sprintf(
+        'Reversed expect argument 1 passed is instanceof %s, array, or instanceof Countable and Array Access',
+        Reverseable::class
+    ));
 }
 
 /**
- * reduce iterable to a single value. because the array_reduce only support array
+ * Reduce iterable to a single value. because the array_reduce only support array
+ *
+ * @param callable $function
+ * @param \Traversable|array $iterable
+ * @param mixed $startValue
+ * @return mixed
  */
 function reduce(callable $function, $iterable, $startValue = null)
 {
@@ -120,8 +141,29 @@ function reduce(callable $function, $iterable, $startValue = null)
 }
 
 /**
- * Joins the elements of an iterable with a separator between them.
+ * Make an iterator that filters elements from data returning only those that
+ * have a corresponding element in selectors that evaluates to true. Stops when
+ * either the data or selectors iterables has been exhausted.
  *
+ * compress(['a', 'b', 'c', 'd', 'e', 'f'], [1,0,1,0,1,1])
+ * --> ['a', 'c', 'e', 'f']
+ */
+function compress($data, $selector)
+{
+    foreach (zip($data, $selector) as list($d, $s)) {
+        if ($s) {
+            yield $d;
+        }
+    }
+}
+
+/**
+ * Joins the elements of an iterable with a separator between them. This is just
+ * like PHP builtin function implode and join except this function accept all iterable.
+ *
+ * @param string $separator
+ * @param \Traversable|array
+ * @return string
  */
 function join($separator, $iterable)
 {
@@ -140,7 +182,11 @@ function join($separator, $iterable)
 }
 
 /**
+ * Returns true if all values in the iterable satisfy the predicate.
  *
+ * @param callable $callback If it null we will wrap it with identify Closue
+ * @param \Traversable|array $iterable
+ * @return boolean
  */
 function all($callback, $iterable)
 {
@@ -159,7 +205,12 @@ function all($callback, $iterable)
 }
 
 /**
+ * Returns true if there is a value in the iterable that satisfies the
+ * predicate.
  *
+ * @param callable $callback If it null we will wrap it with identify Closue
+ * @param \Traversable|array $iterable
+ * @return boolean
  */
 function any($callback, $iterable)
 {
