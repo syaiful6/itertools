@@ -453,7 +453,7 @@ function slice($iterable, $start, $stop = null, $step = null)
     $step = $step ?: 1;
     $nexts = range($start, $stop, $step);
     $nexti = $nexts->current();
-    foreach (enumerate($iterable, 0, true) as $key => list($i, $element)) {
+    foreach (enumerate($iterable) as $key => list($i, $element)) {
         if ($i == $nexti) {
             yield $key => $element;
             $nexts->next();
@@ -465,7 +465,7 @@ function slice($iterable, $start, $stop = null, $step = null)
 /**
  *
  */
-function enumerate($iterable, $start = 0, $preservekey = false)
+function enumerate($iterable, $start = 0, $preservekey = true)
 {
     if (! $preservekey) {
         foreach ($iterable as $val) {
@@ -553,7 +553,7 @@ function multiple($iterable, $by = 2)
     }
     $count = \count($saved);
     $maxLoop = $count * $by;
-    foreach (enumerate(cycle($saved), 2, true) as $key => list($k, $elem)) {
+    foreach (enumerate(cycle($saved), 2) as $key => list($k, $elem)) {
         if ($k > $maxLoop) {
             break;
         }
@@ -563,7 +563,7 @@ function multiple($iterable, $by = 2)
 
 /**
  * Sort the iterable using TimSort algoritm, because PHP sort family function
- * isn't stable, ie same value maybe swapped. and they only work with array
+ * isn't stable, ie same value maybe swapped.
  *
  * @param \Traversable|array $iterable
  * @param callable|null $comparator, if not provided compare directly
@@ -575,6 +575,46 @@ function sort($iterable, callable $comparator = null)
     Sorting\timsort($array, $comparator);
 
     return $array;
+}
+
+/**
+ * Sorts iterable using a set of keys by mapping the values in iterable through
+ * the given callback. The implementation using Decorate-Sort-Undecorate idiom,
+ * in decorate step we make multidimensional array containing the original
+ * collection element and the mapped value. This makes fairly expensive when
+ * the keysets are simple. This operation efficient for large array and lists
+ * where the comparison information is expensive to calculate.
+ *
+ * consider:
+ *   sort([1,2,3,4,5], function ($a, $b) {
+ *      return User::find($a)->last_login <=> User::find($b)->last_login
+ *   });
+ *
+ * it inefficient: it will generates two new User objects during every comparison.
+ * use sort_by instead, because it will cache the user last_login before sorting.
+ * Perl users often call this approach a Schwartzian Transform, after Randal Schwartz.
+ */
+function sort_by($iterable, callable $by)
+{
+    $decorated = map(function ($item) use ($by) {
+        list($i, $v) = $item;
+        return [$by($v), $i, $item];
+    }, enumerate($iterable));
+    // the comparator
+    $comparator = function ($a, $b) {
+        if ($a[0] === $b[0]) {
+            // if two items have the same key, we should preserve their original order
+            return $a[1] < $b[1] ? -1 : 1;
+        } else {
+            return $a[0] < $b[0] ? -1 : 1;
+        }
+    };
+    $decorated = to_array($decorated);
+    Sorting\timsort($decorated, $comparator);
+    // undecorate
+    return array_map(function ($item) {
+        return $item[2];
+    }, $decorated);
 }
 
 /**
