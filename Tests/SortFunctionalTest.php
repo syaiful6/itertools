@@ -11,22 +11,29 @@ class SortFunctionalTest extends PHPUnit_Framework_TestCase
     {
         return $a - $b;
     }
+
+    protected function _runTestFor($callback, $message, $comparator = null)
+    {
+        $lengths = [10, 100, 100, 10000];
+        if ($comparator === null) {
+            $comparator = [$this, 'numberCompare'];
+        }
+        foreach ($lengths as $len) {
+            $arr1 = $callback($len);
+            $arr2 = array_map(null, $arr1);
+            $arr1 = sort($arr1, $comparator);
+            usort($arr2, $comparator);
+            $this->assertEquals($arr2, $arr1, sprintf($message, $len));
+        }
+    }
+
     /**
      *
      */
     public function testRandomArray()
     {
-        $lengths = [10, 100, 100, 10000];
-        $repetitions = 10;
-        foreach ($lengths as $len) {
-            for ($i = 0; $i < $repetitions; $i++) {
-                $arr1 = ArrayGenerator::randomInt($len);
-                $arr2 = array_map(null, $arr1);
-                $arr1 = sort($arr1, [$this, 'numberCompare']);
-                usort($arr2, [$this, 'numberCompare']);
-                $this->assertEquals($arr2, $arr1, "Should sort a size $len random array");
-            }
-        }
+        $this->_runTestFor([ArrayGenerator::class, 'randomInt'],
+            "Should sort a size %d random array");
     }
 
     /**
@@ -34,16 +41,58 @@ class SortFunctionalTest extends PHPUnit_Framework_TestCase
      */
     public function testDescendingArray()
     {
-        $lengths = [10, 100, 1000, 10000];
-        $repetitions = 10;
-        foreach ($lengths as $len) {
-            for ($i = 0; $i < $repetitions; $i++) {
-                $arr1 = ArrayGenerator::descendingInt($len);
-                $arr2 = array_map(null, $arr1);
-                $arr1 = sort($arr1, [$this, 'numberCompare']);
-                usort($arr2, [$this, 'numberCompare']);
-                $this->assertEquals($arr2, $arr1, "Should sort a size $len descending array");
-            }
-        }
+        $this->_runTestFor([ArrayGenerator::class, 'descendingInt'],
+            "Should sort a size %d descending array");
+    }
+
+    /**
+     *
+     */
+    public function testAscendingArray()
+    {
+        $this->_runTestFor([ArrayGenerator::class, 'ascendingInt'],
+            "Should sort a size %d ascending array");
+    }
+
+    /**
+     *
+     */
+    public function testAscending3RandomExchangesArray()
+    {
+        $this->_runTestFor([ArrayGenerator::class, 'ascending3RandomExchangesInt'],
+            "Should sort a size %d ascending array");
+    }
+
+    /**
+     *
+     */
+    public function testAllEqualIntArray()
+    {
+        $this->_runTestFor([ArrayGenerator::class, 'allEqualInt'],
+            "Should sort a size %d ascending array");
+    }
+
+    /**
+     *
+     */
+    public function testStringStringAscendingIntegerSortByNatural()
+    {
+         $this->_runTestFor(function ($len) {
+            return ArrayGenerator::randomStringAscendingInteger('Orange', $len);
+         }, "Should sort a size %d ascending array", "strnatcmp");
+    }
+
+    /**
+     *
+     */
+    public function testTimSortStability()
+    {
+        // use multidimensional array to see the stability
+        $data = [['red', 1], ['blue', 1], ['red', 2], ['blue', 2]];
+        $sorted = sort($data, function ($a, $b) {
+            return strcmp($a[0], $b[0]);
+        });
+        $expected = [['blue', 1], ['blue', 2], ['red', 1], ['red', 2]];
+        $this->assertEquals($expected, $sorted, 'Should stable');
     }
 }
