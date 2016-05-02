@@ -565,13 +565,26 @@ function multiple($iterable, $by = 2)
  * Sort the iterable using TimSort algoritm, because PHP sort family function
  * isn't stable, ie same value maybe swapped.
  *
- * @param \Traversable|array $iterable
+ * @param \Traversable|array|ArrayAccess Countable $iterable
  * @param callable|null $comparator, if not provided compare directly
  * @return array
  */
 function sort($iterable, callable $comparator = null)
 {
-    $array = to_array($iterable);
+    if ($iterable instanceof \Countable && $iterable instanceof \ArrayAccess) {
+        // dont convert to array because timsort only need to access using array
+        // access using numerical key
+        $array = $iterable;
+    } elseif ($iterable instanceof \Traversable) {
+        $array = to_array($iterable);
+    } elseif (is_array($iterable)) {
+        $array = $iterable;
+    } else {
+        throw new \InvalidArgumentException(sprintf(
+            'Expect parameter 1 passed to %s to be an array, ArrayAccess & Countable or Traversable'
+        ));
+    }
+
     Sorting\timsort($array, $comparator);
 
     return $array;

@@ -333,9 +333,10 @@ function gallopRight($value, $array, $start, $length, $hint, $compare)
 }
 
 /**
- * Sort an array in the range [lo, hi) using TimSort.
+ * Sort an array in the range [lo, hi) using TimSort. Parameter 1 should be an
+ * array or and object that implements Countable and ArrayAccess
  *
- * @param $array array - The array to sort.
+ * @param $array array
  * @param callable compare - Item comparison function. Default is
  *     alphabetical
  */
