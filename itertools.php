@@ -218,7 +218,7 @@ function any($callback, $iterable)
             return (bool) $item;
         };
     }
-    foreach ($iter as $it) {
+    foreach ($iterable as $it) {
         if ($callback($it)) {
             return true;
         }
