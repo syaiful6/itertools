@@ -1,4 +1,5 @@
 <?php
+
 namespace Itertools;
 
 use IteratorAggregate;
