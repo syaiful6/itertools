@@ -658,7 +658,7 @@ function sort_by($iterable, callable $by)
 {
     $decorated = map(function ($item) use ($by) {
         list($i, $v) = $item;
-        return [$by($v), $i, $item];
+        return [$by($v), $i, $v];
     }, enumerate($iterable));
     // the comparator
     $comparator = function ($a, $b) {
