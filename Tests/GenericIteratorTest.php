@@ -4,6 +4,8 @@ namespace Itertools\Tests;
 
 use PHPUnit_Framework_TestCase;
 use Mockery as m;
+use function Itertools\iterate;
+use function Itertools\take;
 use function Itertools\take_while;
 use function Itertools\iter;
 use function Itertools\multiple;
@@ -93,5 +95,17 @@ class GenericIteratorTest extends PHPUnit_Framework_TestCase
         $array = ['a', 'b', 'c'];
         $reverse = reversed($array);
         $this->assertSame(['c', 'b', 'a'], to_array($reverse));
+    }
+
+    /**
+     *
+     */
+    public function testTakeFunctional()
+    {
+        $lazyInt = iterate(function ($a) {
+            return $a + 1;
+        }, 0);
+
+        $this->assertSame([0,1,2,3,4], take(5, $lazyInt));
     }
 }

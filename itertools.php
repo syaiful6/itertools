@@ -310,19 +310,59 @@ function range($start, $stop = null, $step = null)
  * argument is supplied, it should be a callable which accept two arguments
  * and it will be used instead of addition.
  */
-function accumulate(callable $callback, $iterable)
+function accumulate($iterable, $accumulator = null)
 {
+    if ($accumulator === null) {
+        $accumulator = function ($a, $b) {
+            return $a + $b;
+        };
+    }
+    if (!is_callable($accumulator)) {
+        throw new \InvalidArgumentException(sprintf(
+            'Argument 2 passed to accumulate must be callable or null. %s Given',
+            is_object($accumulator) ? get_class($accumulator) : gettype($accumulator)
+        ));
+    }
     $iter = iter($iterable);
     // used to identify
-    $sentinel = new \stdClass();
-    $total = next($iter, $sentinel);
-    if ($total !== $sentinel) {
+    try {
+        $total = next($iter);
         yield $total;
-        while ($sentinel !== ($elem = next($iter, $sentinel))) {
-            $total = $callback($total, $elem);
+        while (true) {
+            $total = $accumulator($total, next($iter));
             yield $total;
         }
+    } catch (StopIteration $e) {
+        // signal to stop this iteration
     }
+}
+
+/**
+ * (x, f(x), f(f(x)), ...)
+ */
+function iterate(callable $f, $x)
+{
+    return accumulate(repeat($x), function ($fx, $_) use ($f) {
+        return $f($fx);
+    });
+}
+
+/**
+ *
+ */
+function take($n, $iterable)
+{
+    $slice = slice($iterable, 0, $n);
+    return to_array($slice);
+}
+
+/**
+ *
+ */
+function drop($n, $iterable)
+{
+    $slice = slice($iterable, $n, null);
+    return to_array($slice);
 }
 
 /**
@@ -453,13 +493,16 @@ function slice($iterable, $start, $stop = null, $step = null)
     $stop = $stop ?: INF;
     $step = $step ?: 1;
     $nexts = range($start, $stop, $step);
-    $nexti = $nexts->current();
-    foreach (enumerate($iterable) as $key => list($i, $element)) {
-        if ($i == $nexti) {
-            yield $key => $element;
-            $nexts->next();
-            $nexti = $nexts->current();
+    $nexti = next($nexts);
+    try {
+        foreach (enumerate($iterable) as $key => list($i, $element)) {
+            if ($i == $nexti) {
+                yield $key => $element;
+                $nexti = next($nexts);
+            }
         }
+    } catch (StopIteration $e) {
+        //pass
     }
 }
 
