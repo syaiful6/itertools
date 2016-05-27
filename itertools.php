@@ -377,6 +377,9 @@ function chain(...$iterables)
     }
 }
 
+/**
+ *
+ */
 function chain_from_iterable($iterable)
 {
     foreach ($iterable as $it) {

@@ -12,7 +12,6 @@ use Itertools\Traits\SimpleIterable;
  */
 class ProductIterator implements IteratorAggregate
 {
-    use SimpleIterable;
     protected $repeat = 1;
     protected $iterables = [];
 
@@ -35,7 +34,7 @@ class ProductIterator implements IteratorAggregate
     /**
      *
      */
-    public function _innerIterator()
+    public function getIterator()
     {
         $repeat = $this->repeat;
         $pools = array_map('Itertools\\to_array', $this->iterables);
