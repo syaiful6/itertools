@@ -528,7 +528,7 @@ function enumerate($iterable, $start = 0, $preservekey = true)
 }
 
 /**
- * Return n independent iterators from a single iterable, usefull when you
+ * Return n independent iterators from a single iterable, useful when you
  * dealing with no rewind iterator, but need to traverse more that 1 time.
  */
 function tee($iterable, $n = 2)
